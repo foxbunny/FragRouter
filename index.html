@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  </head>
+    <title>Hash test</title>
+    <script type="text/javascript" src="frag.js"></script>
+  </head>
+  <body>
+    <ul>
+      <li><a href="#">Home</a></li>
+      <li><a href="#test">Test</a></li>
+      <li><a href="#testarg/foo">Test with 'foo' argument</a></li>
+      <li><a href="#nested">Nested root</a></li>
+      <li><a href="#nested/test">Nested test</a></li>
+      <li><a href="#nested/testarg/foo">Nested test with 'foo' argument</a></li>
+      <li><a href="#missing/path">Missing route</a></li>
+    </ul>
+
+    <div id="msg">Route handlers will present messages here</div>
+
+    <script>
+      var msgElem = document.getElementById('msg');
+      function msg(s) {
+        msgElem.innerHTML = s;
+      }
+
+      var routes = {
+        _: function() { msg('Home'); },
+        test: function() { msg('Test'); },
+        testarg: function(arg) { msg('Testing argument: ' + arg); },
+        nested: {
+          _: function() { msg('Nested root'); },
+          test: function() { msg('Nested test'); },
+          testarg: function(arg) { msg('Nested test with argument: ' + arg); }
+        },
+        '404': function() { msg('Not found'); }
+      };
+
+      frag.start(routes);
+    </script>
+  </body>
+</html>
