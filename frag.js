@@ -330,7 +330,7 @@
 
     if (!handlers[request.route]) {
       // No matching route, call missing route handler.
-      return notFoundHandler(path);
+      return notFoundHandler.call(request, path);
     }
 
     if (typeof handlers[request.route] === 'function') {
