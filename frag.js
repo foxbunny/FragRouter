@@ -175,6 +175,30 @@
   }
 
   /**
+   * ## executeMiddlewares(request, final, index)
+   *
+   * Executes middlewares one by one.
+   *
+   * @param {Object} request Request object
+   * @param {Function} final Final callback
+   * @param {Integer} index Index of the current middleware
+   * @private
+   */
+  function executeMiddlewares(request, final, index) {
+    index = index || 0;
+
+    // No more middlewares?
+    if (!middlewares[index]) { return final(); }
+
+    // Call next middleware
+    middlewares[index].call(request, function(err) {
+      // TODO: Implement support for error handlers
+      if (err) { throw err; } 
+      executeMiddlewares(request, final, index + 1);
+    });
+  }
+
+  /**
    * ## handleRoute(path, handlers)
    *
    * Given `path`, an Array of path components as prepared by `extractPath`,
@@ -195,45 +219,43 @@
     request.route = path.shift();
     request.params = path;
 
-    // Apply all middlewares
-    middlewares.forEach(function(middleware) {
-      middleware.call(request);
-    });
-
-    if (!handlers) {
-      // No handlers found, call missing route handler.
-      return notFoundHandler.call(request);
-    }
-    
-    if (!request.route) {
-      // This is root path. If there is a function for handling root path,
-      // call it. Otherwise, call missing route handler.
-      if (typeof handlers._ === 'function') {
-        return handlers._.apply(request);
-      } else {
+    // Apply middlewares
+    executeMiddlewares(request, function() {
+      if (!handlers) {
+        // No handlers found, call missing route handler.
         return notFoundHandler.call(request);
       }
-    }
+      
+      if (!request.route) {
+        // This is root path. If there is a function for handling root path,
+        // call it. Otherwise, call missing route handler.
+        if (typeof handlers._ === 'function') {
+          return handlers._.apply(request);
+        } else {
+          return notFoundHandler.call(request);
+        }
+      }
 
-    if (!handlers[request.route]) {
-      // No matching route, call missing route handler.
-      return notFoundHandler.call(request, path);
-    }
+      if (!handlers[request.route]) {
+        // No matching route, call missing route handler.
+        return notFoundHandler.call(request, path);
+      }
 
-    if (typeof handlers[request.route] === 'function') {
-      // Handler is a function, so let's call it
-      return handlers[request.route].apply(request, request.params);
-    }
+      if (typeof handlers[request.route] === 'function') {
+        // Handler is a function, so let's call it
+        return handlers[request.route].apply(request, request.params);
+      }
 
-    if (typeof handlers[request.route] === 'object') {
-      // Handler is an object so recurse into the object using params as 
-      // the new path.
-      return handleRoute(request.params, handlers[request.route]);
-    }
+      if (typeof handlers[request.route] === 'object') {
+        // Handler is an object so recurse into the object using params as 
+        // the new path.
+        return handleRoute(request.params, handlers[request.route]);
+      }
 
-    // Are we still not done? Something is wrong with handler setup.
-    throw new Error('Bad handler configuration for path ' + 
-                    window.location.hash);
+      // Are we still not done? Something is wrong with handler setup.
+      throw new Error('Bad handler configuration for path ' + 
+                      window.location.hash);
+    });
   }
 
   /**
