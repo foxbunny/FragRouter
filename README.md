@@ -140,6 +140,32 @@ must come last, no matter how deeply your route is nested.
 In future FragRouter will provide mechanisms for calling other handlers from
 within handlers, which will enable you to manually write nested routes.
 
+## Middleware
+
+FragRouter supports rudimentary middlewares. These are functions that are
+called right before a handler. They can be used to perform tasks that are
+common for all routes in preparation for route handling.
+
+Let's implement a simple middleware that allows handlers to change the page
+title so you can get an idea about how it works:
+
+    var titleSuffix = " - My awesome site";
+    function pageTitleMiddleware(next) {
+        var request = this;
+        request.setTitle = function(title) {
+            document.title = title + titleSuffix;
+        };
+        next();
+    }
+    frag.addMiddleware(pageTitleMiddleware);
+
+Now, in your request handler, you can set the title like so:
+
+    function myHandler() {
+        var request = this;
+        request.setTitle('Home');
+    }
+
 # API Documentation
 
 ## frag.start(handlers)
@@ -156,6 +182,19 @@ Missing routes handler is called when no route matches. You can override
 it by using this method to set your own function. The handler function
 must accept a single argument, which is a string containing the route that
 failed to mach.
+
+## frag.addMiddleware(func)
+
+Push a middleware function to the last possition o the middleware stack.  The
+middleware will be executed once per each hashchange event, before any handler
+can handle the reuqest. It will accept a single callback function, which allows
+the stack to continue.
+
+Passing a truthy value to the continuation callback will halt the stack and
+prevent the handling of the route. This can be useful during debugging, to
+prevent the code from doing unexpected or unforeseen things.
+
+Within the middleware function, `this` is a Request object.
 
 ## Request([path, route, parameters])
 

@@ -76,6 +76,10 @@
    * handler can handle the reuqest. It will accept a single callback function,
    * which allows the stack to continue.
    *
+   * Passing a truthy value to the continuation callback will halt the stack
+   * and prevent the handling of the route. This can be useful during
+   * debugging, to prevent the code from doing unexpected or unforeseen things.
+   *
    * Within the middleware function, `this` is a Request object.
    *
    * @param {Function} func Middleware function
