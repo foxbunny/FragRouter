@@ -165,6 +165,9 @@
   var history = [];
   var historyPosition = 0;
 
+  // Middlewares
+  var middlewares = [];
+
   /**
    * ## notFoundHandler
    *
@@ -199,6 +202,23 @@
     }
 
     throw new Error('Missing route handler must be a function');
+  };
+
+  /**
+   * ## frag.addMiddleware(func)
+   *
+   * Push a middleware function to the last possition o the middleware stack.
+   * The middleware will be executed once per each hashchange event, before any
+   * handler can handle the reuqest. It will accept a single callback function,
+   * which allows the stack to continue.
+   *
+   * Within the middleware function, `this` is a Request object.
+   *
+   * @param {Function} func Middleware function
+   */
+  frag.addMiddleware = function(func) {
+    if (typeof func !== 'function') { return; }
+    middlewares.push(func);
   };
 
   /**
@@ -306,16 +326,22 @@
     history.push(window.location.hash.slice(1));
     historyPosition = history.length - 1;
 
+    // Cereate request object
     var request = new Request(path);
+    request.route = path.shift();
+    request.params = path;
+
+    // Apply all middlewares
+    middlewares.forEach(function(middleware) {
+      middleware.call(request);
+    });
 
     if (!handlers) {
       // No handlers found, call missing route handler.
       return notFoundHandler.call(request);
     }
     
-    console.log(path);
-
-    if (!path.length || path[0] === '') {
+    if (!request.route) {
       // This is root path. If there is a function for handling root path,
       // call it. Otherwise, call missing route handler.
       if (typeof handlers._ === 'function') {
@@ -324,9 +350,6 @@
         return notFoundHandler.call(request);
       }
     }
-
-    request.route = path.shift(1);
-    request.params = path;
 
     if (!handlers[request.route]) {
       // No matching route, call missing route handler.
