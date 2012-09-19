@@ -267,8 +267,8 @@
       params = [];
     }
     window.location[hide ? 'replace' : 'assign'](
-      window.location.href.split('#')[0] + '#' + location + '/' + 
-      params.join('/'));
+      window.location.href.split('#')[0] + '#' + location ? (location + '/' + 
+      params.join('/')) : '');
   };
 
   /**
