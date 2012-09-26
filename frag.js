@@ -179,26 +179,28 @@
   }
 
   /**
-   * ## executeMiddlewares(request, final, index)
+   * ## executeMiddlewares(request, [funcs], final)
    *
    * Executes middlewares one by one.
    *
    * @param {Object} request Request object
+   * @param {Array} funcs Optional array of middlewares to call, defaults to
+   * global middlewares array
    * @param {Function} final Final callback
-   * @param {Integer} index Index of the current middleware
    * @private
    */
-  function executeMiddlewares(request, final, index) {
-    index = index || 0;
+  function executeMiddlewares(request, funcs, final) {
+    if (typeof funcs === 'function') {
+      final = funcs;
+      funcs = middlewares;
+    }
 
-    // No more middlewares?
-    if (!middlewares[index]) { return final(); }
+    if (!funcs.length) { return final(); }
 
-    // Call next middleware
-    middlewares[index].call(request, function(err) {
+    funcs[0].call(request, function(err) {
       // TODO: Implement support for error handlers
       if (err) { throw err; } 
-      executeMiddlewares(request, final, index + 1);
+      executeMiddlewares(request, funcs.slice(1), final);
     });
   }
 
