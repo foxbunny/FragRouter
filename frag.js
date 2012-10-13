@@ -265,14 +265,32 @@
   }
 
   /**
-   * ## frag.start(handlers)
+   * ## frag.start(handlers, remapLocal)
    *
    * Start routing handlers found in `handlers` object.
    *
+   * If `remapLocal` flag is `true`, any URLs that do not point to external
+   * servers will be converted to hashes.
+   *
    * @param {Object} handlers Object containing route handler function and
+   * @param {Boolean} remapLocal Remap all local URLs so that they use hashes
    * subroutes.
    */
-  frag.start = function(handlers) {
+  frag.start = function(handlers, remapLocal) {
+
+    if (remapLocal) {
+      var anchors = document.getElementsByTagName('a');
+      var a;
+      var rootPath = window.location.protocol + '//' + window.location.host +
+        (window.location.port ? ':' + window.locaton.port : '') + '/';
+      for (var i = anchors.length - 1; i; i--) {
+        a = anchors.item(i);
+        if (a.href.indexOf(rootPath) > -1) {
+          a.href = a.href.replace(rootPath, '#')
+        }
+      }
+    }
+
     // Do nothing if already routing
     if (this.isRouting) { return; }
 
